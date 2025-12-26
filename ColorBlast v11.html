@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorBlast v11 - Sistema de Questões</title>
+    <style>
+        :root {
+            --sidebar-width: 240px;
+            --right-panel-width: 280px;
+            --header-height: 60px;
+            --color-primary: #2d7a99;
+            --color-secondary: #1a4d5e;
+            --color-accent: #32a8c5;
+            --color-bg: #f5f5f5;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            height: var(--header-height);
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 30px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .keyboard-hint {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            display: flex;
+            height: calc(100vh - var(--header-height));
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .sidebar-title {
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-secondary);
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 8px;
+        }
+
+        .tema-item {
+            padding: 10px 12px;
+            margin: 2px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tema-item:hover {
+            background-color: var(--color-bg);
+            transform: translateX(3px);
+        }
+
+        .tema-item.active {
+            background-color: var(--color-bg);
+            font-weight: 700;
+            border-left-width: 4px;
+        }
+
+        .tema-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .clear-filters {
+            padding: 10px 12px;
+            margin: 8px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-align: center;
+            width: calc(100% - 16px);
+        }
+
+        .clear-filters:hover {
+            background-color: #ff5252;
+        }
+
+        /* MAIN AREA */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .results-header {
+            padding: 12px 20px;
+            background-color: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--color-secondary);
+        }
+
+        .questoes-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .questao-card {
+            background-color: var(--color-surface);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--color-primary);
+            border: 1px solid var(--color-border);
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .questao-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .questao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .questao-id {
+            font-weight: 700;
+            color: var(--color-primary);
+            font-size: 12px;
+        }
+
+        .questao-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--color-secondary);
+        }
+
+        .questao-enunciado {
+            margin: 12px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .questao-temas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tema-badge {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tema-badge:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .questao-gabarito {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background-color: var(--color-bg);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-primary);
+            display: inline-block;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--color-secondary);
+            text-align: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        /* RIGHT PANEL */
+        .right-panel {
+            width: var(--right-panel-width);
+            background-color: var(--color-surface);
+            border-left: 1px solid var(--color-border);
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .coocorrencia-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: var(--color-bg);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .coocorrencia-item:hover {
+            background-color: #e8f4f8;
+            transform: translateX(2px);
+        }
+
+        .coocorrencia-label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .coocorrencia-count {
+            background-color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .panel-empty {
+            text-align: center;
+            color: var(--color-secondary);
+            font-size: 12px;
+            padding: 24px 0;
+            opacity: 0.6;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .right-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 180px;
+                font-size: 12px;
+            }
+
+            .search-container {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>🎨 ColorBlast v11</h1>
+        <div class="search-container">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchGlobal" 
+                placeholder="Buscar questões..."
+                aria-label="Buscar questões por texto"
+            >
+            <span class="search-icon">🔍</span>
+        </div>
+        <span class="keyboard-hint">Ctrl+K / Cmd+K</span>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-title">Temas (92)</div>
+            <div id="temasList"></div>
+            <button class="clear-filters" id="clearFilters">Limpar Filtros</button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="results-header">
+                <span id="resultsCount">0 questões</span>
+                <span id="selectedTemasCount"></span>
+            </div>
+            <div class="questoes-container" id="quesoesContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <p>Selecione um tema para começar</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL -->
+        <aside class="right-panel">
+            <div class="panel-title">Temas Relacionados</div>
+            <div id="coocorrenciaPanel">
+                <div class="panel-empty">Selecione um tema</div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // ============================================
+        // DADOS - QUESTÕES (10 fictícias para teste)
+        // ============================================
+        const QUESTOES = [
+            {
+                id: "Q001",
+                enunciado: "A hipovolemia é uma condição clínica caracterizada pela redução do volume total de sangue circulante. Qual é o primeiro passo no atendimento inicial?",
+                gabarito: "C",
+                banca: "CESPE",
+                ano: 2023,
+                temas: ["Primeiros Socorros", "Choque Hipovolêmico", "Emergências"]
+            },
+            {
+                id: "Q002",
+                enunciado: "Em casos de parada cardiorrespiratória, a sequência de RCP (Reanimação Cardiopulmonar) deve seguir qual proporção de compressões?",
+                gabarito: "A",
+                banca: "BANCA VUNESP",
+                ano: 2024,
+                temas: ["RCP", "Parada Cardíaca", "Primeiros Socorros"]
+            },
+            {
+                id: "Q003",
+                enunciado: "Uma vítima de queimadura apresenta bolhas e dor intensa. Qual é a profundidade desta queimadura?",
+                gabarito: "B",
+                banca: "IADES",
+                ano: 2023,
+                temas: ["Queimaduras", "Emergências", "Primeiros Socorros"]
+            },
+            {
+                id: "Q004",
+                enunciado: "A hemostasia é o processo de parada do sangramento. Descreva os mecanismos envolvidos neste processo fisiológico.",
+                gabarito: "D",
+                banca: "FCC",
+                ano: 2022,
+                temas: ["Hemostasia", "Fisiologia", "Coagulação"]
+            },
+            {
+                id: "Q005",
+                enunciado: "Em um acidente com múltiplas vítimas, qual deve ser o critério de triagem utilizado conforme protocolo SAVE?",
+                gabarito: "E",
+                banca: "CESPE",
+                ano: 2023,
+                temas: ["Triagem", "Emergências", "Protocolo"]
+            },
+            {
+                id: "Q006",
+                enunciado: "A síndrome de compartimento é uma complicação grave pós-traumática. Quais são os sinais clínicos característicos?",
+                gabarito: "A",
+                banca: "BANCA VUNESP",
+                ano: 2024,
+                temas: ["Trauma", "Síndrome de Compartimento", "Emergências"]
+            },
+            {
+                id: "Q007",
+                enunciado: "Qual é o protocolo adequado para abordagem de um paciente com intoxicação aguda por cianeto?",
+                gabarito: "C",
+                banca: "IADES",
+                ano: 2023,
+                temas: ["Intoxicação", "Toxicologia", "Emergências"]
+            },
+            {
+                id: "Q008",
+                enunciado: "A hipotermia é definida como queda da temperatura central do corpo abaixo de qual valor?",
+                gabarito: "B",
+                banca: "FCC",
+                ano: 2022,
+                temas: ["Hipotermia", "Ambiente", "Fisiologia"]
+            },
+            {
+                id: "Q009",
+                enunciado: "Em caso de corpo estranho em vias aéreas, qual é a manobra recomendada para desobstrução em adulto consciente?",
+                gabarito: "D",
+                banca: "CESPE",
+                ano: 2024,
+                temas: ["Vias Aéreas", "Obstrução", "Primeiros Socorros"]
+            },
+            {
+                id: "Q010",
+                enunciado: "A gestão de risco de transmissão de doenças infecciosas em ambiente hospitalar segue qual protocolo internacional?",
+                gabarito: "E",
+                banca: "ANVISA",
+                ano: 2023,
+                temas: ["Biossegurança", "Infecção", "Controle"]
+            }
+        ];
+
+        // ============================================
+        // TEMAS - 92 temas com cores automáticas
+        // ============================================
+        const TEMAS_LISTA = [
+            "Primeiros Socorros", "RCP", "Parada Cardíaca", "Choque Hipovolêmico",
+            "Queimaduras", "Trauma", "Emergências", "Hemostasia", "Coagulação",
+            "Fisiologia", "Vias Aéreas", "Obstrução", "Triagem", "Protocolo",
+            "Síndrome de Compartimento", "Intoxicação", "Toxicologia", "Hipotermia",
+            "Ambiente", "Biossegurança", "Infecção", "Controle", "Epidemiologia",
+            "Microbiologia", "Parasitologia", "Imunologia", "Farmacologia", "Antibióticos",
+            "Anestesia", "Analgesia", "Sedação", "Ventilação Mecânica", "Oxigenação",
+            "Hemodinâmica", "Pressão Arterial", "Frequência Cardíaca", "Arritmias",
+            "Insuficiência Cardíaca", "Infarto", "Cardiologia", "Pneumonia", "SDRA",
+            "Asma", "DPOC", "Tuberculose", "Pneumotórax", "Insuficiência Renal",
+            "Diálise", "Nefrologia", "Diabetes", "Endocrinologia", "Distúrbios Metabólicos",
+            "Gastroenterologia", "Abdômen Agudo", "Pancreatite", "Hepatite", "Hepatologia",
+            "Oncologia", "Câncer", "Quimioterapia", "Radioterapia", "Neurologia",
+            "AVC", "Meningite", "Epilepsia", "Cefaleia", "Psiquiatria", "Psicose",
+            "Depressão", "Ansiedade", "Transtorno", "Ortopedia", "Fraturas",
+            "Luxações", "Artrite", "Reumatologia", "Dermatologia", "Lesão Cutânea",
+            "Queimadura", "Alergia", "Imunização", "Vacinação", "Pediatria", "Neonatologia",
+            "Obstetrícia", "Ginecologia", "Gravidez", "Puerpério"
+        ];
+
+        // ============================================
+        // GERADOR DE CORES - Padrão automático para 92 temas
+        // ============================================
+        class ColorGenerator {
+            constructor() {
+                this.colors = this.generateColors();
+                this.colorMap = {};
+                TEMAS_LISTA.forEach((tema, idx) => {
+                    this.colorMap[tema] = this.colors[idx % this.colors.length];
+                });
+            }
+
+            generateColors() {
+                const colors = [];
+                const hueStep = 360 / 92;
+                for (let i = 0; i < 92; i++) {
+                    const hue = (i * hueStep) % 360;
+                    const saturation = 65 + ((i % 3) * 10);
+                    const lightness = 45 + ((i % 2) * 10);
+                    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+                }
+                return colors;
+            }
+
+            getColor(tema) {
+                return this.colorMap[tema] || '#888888';
+            }
+        }
+
+        const colorGen = new ColorGenerator();
+
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        let state = {
+            temasAtivos: [],
+            busca: '',
+            questoesExibidas: []
+        };
+
+        // ============================================
+        // FUNÇÕES PRINCIPAIS
+        // ============================================
+
+        function renderTemas() {
+            const temasList = document.getElementById('temasList');
+            temasList.innerHTML = '';
+
+            TEMAS_LISTA.forEach(tema => {
+                const div = document.createElement('div');
+                const color = colorGen.getColor(tema);
+                div.className = 'tema-item' + (state.temasAtivos.includes(tema) ? ' active' : '');
+                div.innerHTML = `
+                    <span class="tema-color" style="background-color: ${color}"></span>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${tema}</span>
+                `;
+                
+                div.addEventListener('click', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        toggleTema(tema);
+                    } else {
+                        state.temasAtivos = state.temasAtivos.includes(tema) ? [] : [tema];
+                        renderTemas();
+                        filtrarQuestoes();
+                    }
+                });
+
+                temasList.appendChild(div);
+            });
+        }
+
+        function toggleTema(tema) {
+            const idx = state.temasAtivos.indexOf(tema);
+            if (idx > -1) {
+                state.temasAtivos.splice(idx, 1);
+            } else {
+                state.temasAtivos.push(tema);
+            }
+            renderTemas();
+            filtrarQuestoes();
+        }
+
+        function filtrarQuestoes() {
+            let filtradas = QUESTOES;
+
+            if (state.temasAtivos.length > 0) {
+                filtradas = filtradas.filter(q => 
+                    state.temasAtivos.some(t => q.temas.includes(t))
+                );
+            }
+
+            if (state.busca.trim()) {
+                const termo = state.busca.toLowerCase();
+                filtradas = filtradas.filter(q =>
+                    q.enunciado.toLowerCase().includes(termo) ||
+                    q.id.toLowerCase().includes(termo)
+                );
+            }
+
+            state.questoesExibidas = filtradas;
+            renderQuestoes();
+            atualizarPainelDireito();
+            atualizarContadores();
+        }
+
+        function renderQuestoes() {
+            const container = document.getElementById('quesoesContainer');
+            
+            if (state.questoesExibidas.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>Nenhuma questão encontrada</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.questoesExibidas.map(q => {
+                const corBorda = colorGen.getColor(q.temas[0]);
+                return `
+                    <div class="questao-card" style="border-left-color: ${corBorda}">
+                        <div class="questao-header">
+                            <span class="questao-id">${q.id}</span>
+                            <div class="questao-meta">
+                                <span>${q.banca}</span>
+                                <span>${q.ano}</span>
+                            </div>
+                        </div>
+                        <div class="questao-enunciado">${q.enunciado}</div>
+                        <div class="questao-temas">
+                            ${q.temas.map(t => `
+                                <button class="tema-badge" style="background-color: ${colorGen.getColor(t)}" title="${t}">
+                                    ${t}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="questao-gabarito">Gabarito: <strong>${q.gabarito}</strong></div>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.tema-badge').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tema = btn.title;
+                    if (e.ctrlKey || e.metaKey) {
+                        toggleTema(tema);
+                    } else {
+                        state.temasAtivos = [tema];
+                        renderTemas();
+                        filtrarQuestoes();
+                    }
+                });
+            });
+        }
+
+        function atualizarPainelDireito() {
+            const panel = document.getElementById('coocorrenciaPanel');
+
+            if (state.temasAtivos.length === 0) {
+                panel.innerHTML = '<div class="panel-empty">Selecione um tema</div>';
+                return;
+            }
+
+            const temaSelecionado = state.temasAtivos[0];
+            const coocorrencias = {};
+
+            state.questoesExibidas.forEach(q => {
+                if (q.temas.includes(temaSelecionado)) {
+                    q.temas.forEach(t => {
+                        if (t !== temaSelecionado) {
+                            coocorrencias[t] = (coocorrencias[t] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            const sorted = Object.entries(coocorrencias)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            if (sorted.length === 0) {
+                panel.innerHTML = '<div class="panel-empty">Nenhum tema relacionado</div>';
+                return;
+            }
+
+            panel.innerHTML = sorted.map(([tema, count]) => `
+                <div class="coocorrencia-item" style="border-left-color: ${colorGen.getColor(tema)}">
+                    <span class="coocorrencia-label">${tema}</span>
+                    <span class="coocorrencia-count">${count}</span>
+                </div>
+            `).join('');
+
+            panel.querySelectorAll('.coocorrencia-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const tema = item.querySelector('.coocorrencia-label').textContent;
+                    state.temasAtivos = [tema];
+                    renderTemas();
+                    filtrarQuestoes();
+                });
+            });
+        }
+
+        function atualizarContadores() {
+            document.getElementById('resultsCount').textContent = 
+                `${state.questoesExibidas.length} questão${state.questoesExibidas.length !== 1 ? 's' : ''}`;
+            
+            const selectedSpan = document.getElementById('selectedTemasCount');
+            if (state.temasAtivos.length > 0) {
+                selectedSpan.textContent = `Tema${state.temasAtivos.length > 1 ? 's' : ''} selecionado${state.temasAtivos.length > 1 ? 's' : ''}: ${state.temasAtivos.join(', ')}`;
+            } else {
+                selectedSpan.textContent = '';
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.getElementById('searchGlobal').addEventListener('input', (e) => {
+            state.busca = e.target.value;
+            filtrarQuestoes();
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            state.temasAtivos = [];
+            state.busca = '';
+            document.getElementById('searchGlobal').value = '';
+            renderTemas();
+            filtrarQuestoes();
+        });
+
+        // Atalho Ctrl+K / Cmd+K para focar na busca
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchGlobal').focus();
+            }
+        });
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+
+        window.addEventListener('load', () => {
+            renderTemas();
+            filtrarQuestoes();
+        });
+    </script>
+</body>
+</html>
